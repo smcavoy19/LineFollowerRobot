@@ -1,0 +1,151 @@
+    /* Ardumoto Example Sketch
+  by: Jim Lindblom
+  date: November 8, 2013
+  license: Public domain. Please use, reuse, and modify this 
+  sketch!
+
+  Adapted to v20 hardware by: Marshall Taylor
+  date: March 31, 2017
+
+  Three useful functions are defined:
+    setupArdumoto() -- Setup the Ardumoto Shield pins
+    driveArdumoto([motor], [direction], [speed]) -- Drive [motor] 
+      (0 for A, 1 for B) in [direction] (0 or 1) at a [speed]
+      between 0 and 255. It will spin until told to stop.
+    stopArdumoto([motor]) -- Stop driving [motor] (0 or 1).
+
+  setupArdumoto() is called in the setup().
+  The loop() demonstrates use of the motor driving functions.
+*/
+
+// Clockwise and counter-clockwise definitions.
+// Depending on how you wired your motors, you may need to swap.
+#define FORWARD  0
+#define REVERSE 1
+
+// Motor definitions to make life easier:
+#define MOTOR_A 0
+#define MOTOR_B 1
+
+// Pin Assignments //
+//Default pins:
+#define DIRA 2 // Direction control for motor A
+#define PWMA 3  // PWM control (speed) for motor A
+#define DIRB 4 // Direction control for motor B
+#define PWMB 11 // PWM control (speed) for motor B
+
+////Alternate pins:
+//#define DIRA 8 // Direction control for motor A
+//#define PWMA 9 // PWM control (speed) for motor A
+//#define DIRB 7 // Direction control for motor B
+//#define PWMB 10 // PWM control (speed) for motor B
+int past_Middle;
+int past_Left;
+int past_Right;
+
+void setup()
+{
+  Serial.begin(9600);
+  setupArdumoto(); // Set all pins as outputs
+  driveArdumoto(1, 0, 95);
+  driveArdumoto(0, 0, 95);
+  past_Middle = 0;
+  past_Left = 0;
+  past_Right = 0;
+}
+
+void loop(){
+ 
+  int left_Value = analogRead(2);
+  int right_Value = analogRead(1);
+   int middle_Value = analogRead(0);
+ /*if(left_Value > 550){    //obstacle course
+           driveArdumoto(0, 0, 105);              //if left sensor slow down same side and speed up the other side until opposite sensor
+           driveArdumoto(1, 0, 0);               //reads the line
+     }
+   if(right_Value > 550){
+           driveArdumoto(1, 0, 105);
+           driveArdumoto(0, 0, 0);
+   }
+
+if(left_Value > 550 && right_Value < 550){      // speed for straight line 
+       driveArdumoto(0, 0, 105);                   //if on the left sensor turn right but at a similar speed on both wheel
+           driveArdumoto(1, 0, 100);
+     }
+if(right_Value > 550 && left_Value < 550){      //if right sensor...
+           driveArdumoto(1, 0, 105);
+           driveArdumoto(0, 0, 100);
+   }*/
+
+   //complicate code
+  if(analogRead(0) < 350){      //if middle sensor is white and it is on one of the sides black then adjust motor speed 
+     if(left_Value > 350 && right_Value < 350){
+        while(analogRead(0)<350){             //until the middle reads black
+           driveArdumoto(0, 0, 95);
+           driveArdumoto(1, 0, 25);
+        }
+     }
+     if(right_Value > 350 && left_Value < 350){
+       while(analogRead(0)<350){
+           driveArdumoto(1, 0, 95);
+           driveArdumoto(0, 0, 25);
+     }
+     
+   } 
+  }
+  else{      //if middle sensor reads black and right or left sensor then it must be a 90 degree turn or less 
+    if(left_Value > 350 && right_Value < 350){      //therefore turn opposite side hard while same side stops
+        while(analogRead(0)<350){
+           driveArdumoto(0, 0, 95);
+           driveArdumoto(1, 0, 25);
+        }
+     }
+     if(right_Value > 350 && left_Value < 350){     //therefore turn opposite side hard while same side stops
+       while(analogRead(0)<350){
+           driveArdumoto(1, 0, 95);
+           driveArdumoto(0, 0, 25);
+     }
+     if(right_Value < 350 && left_Value < 350){    //on just middle sensor go straight
+           driveArdumoto(1, 0, 95);
+           driveArdumoto(0, 0, 95);
+     }
+   }
+   
+  }
+  past_Middle = middle_Value;     //tried to incorparate past positions but it was very complicating to derive properly
+  past_Left = left_Value;
+  past_Right = right_Value;
+}
+
+// driveArdumoto drives 'motor' in 'dir' direction at 'spd' speed
+void driveArdumoto(byte motor, byte dir, byte spd){
+  if (motor == MOTOR_A){
+    digitalWrite(DIRA, dir);
+    analogWrite(PWMA, spd);
+  }
+  else if (motor == MOTOR_B){
+    digitalWrite(DIRB, dir);
+    analogWrite(PWMB, spd);
+  }  
+}
+
+// stopArdumoto makes a motor stop
+void stopArdumoto(byte motor){
+  driveArdumoto(motor, 0, 0);
+}
+
+
+// setupArdumoto initialize all pins
+void setupArdumoto(){
+  // All pins should be setup as outputs:
+  pinMode(PWMA, OUTPUT);
+  pinMode(PWMB, OUTPUT);
+  pinMode(DIRA, OUTPUT);
+  pinMode(DIRB, OUTPUT);
+
+  // Initialize all pins as low:
+  digitalWrite(PWMA, LOW);
+  digitalWrite(PWMB, LOW);
+  digitalWrite(DIRA, LOW);
+  digitalWrite(DIRB, LOW);
+}
